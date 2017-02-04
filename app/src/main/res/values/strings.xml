@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Sebestyen_UB</string>
+    <string name="action_settings">Settings</string>
+
+
+    <string name="strike_label">Strikes:</string>
+    <string name="ball_label">Balls:</string>
+    <string name="out_label">Outs:</string>
+
+    <string name="strike_button">STRIKE</string>
+    <string name="ball_button">BALL</string>
+
+    <string name="strike_value">0</string>
+    <string name="ball_value">0</string>
+    <string name="out_value">0</string>
+
+</resources>
