@@ -4,9 +4,10 @@ package com.example.sarah.sebestyen_ub;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.view.menu.MenuView;
+
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -14,28 +15,33 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.AdapterView;
+
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.app.AlertDialog;
 import android.widget.Toast;
 import android.view.ContextMenu.*;
 
+import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity implements OnClickListener   {
+
+public class MainActivity extends AppCompatActivity implements OnClickListener , TextToSpeech.OnInitListener {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-    private static final String TAG = "Count Much More";
+    private static final String TAG = "Umpire Buddy";
 
     private static final String PREFS_NAME = "PrefsFile";
+    private static final String TEXT_KEY = "TextKey";
+
+    private TextToSpeech mTts;
 
     private int numStrike = 0;
     private int numBall = 0;
     private int numOut = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////
-
 
 
     @Override
@@ -47,6 +53,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
         setContentView(R.layout.activity_main);
         //save
 
+        mTts = new TextToSpeech(this, this);
+
 
         if (savedInstanceState != null) {
             numBall = savedInstanceState.getInt("balls");
@@ -54,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
             numOut = savedInstanceState.getInt("outs");
 
         }
+
+        CheckBox checkText = (CheckBox) findViewById(R.id.checkBox);
+
 
         Button LC = (Button) findViewById(R.id.long_click);
         registerForContextMenu(LC);
@@ -67,6 +78,9 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
 
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
 
+        final boolean t_S = settings.getBoolean(TEXT_KEY, false);
+        checkText.setChecked(t_S);
+
         SharedPreferences.Editor editor = settings.edit();
 
         updateCount();
@@ -74,7 +88,29 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
         editor.putInt("strikes", numStrike);
         editor.putInt("balls", numBall);
         editor.commit();
+
+        checkText.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (((CheckBox) v).isChecked()) {
+                    Toast.makeText(getApplicationContext(), "Box is clicked", Toast.LENGTH_LONG).show();
+
+
+                } else {
+                    Toast.makeText(getApplicationContext(), "Unclicked", Toast.LENGTH_LONG).show();
+
+                }
+                SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putBoolean(TEXT_KEY, ((CheckBox) v).isChecked());
+                // Commit the edits
+                editor.commit();
+            }
+        });
+
+
     }
+
 
     private void updateCount() {
         TextView strikeValue = (TextView) findViewById(R.id.strike_value);
@@ -148,13 +184,22 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
 
     @Override
     public void onClick(View view) {
+
+        CheckBox click = (CheckBox) findViewById(R.id.checkBox);
+        click.setOnClickListener(this);
         switch (view.getId()) {
             case R.id.strike_button:
                 numStrike++;
+                if (numStrike == 3 && click.isChecked()){
+                    mTts.speak("out", TextToSpeech.QUEUE_FLUSH, null);
+                }
                 validateCount();
                 break;
             case R.id.ball_button:
                 numBall++;
+                if (numBall == 4 && click.isChecked()){
+                    mTts.speak("walk", TextToSpeech.QUEUE_FLUSH, null);
+                }
                 validateCount();
                 break;
         }
@@ -183,13 +228,14 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
                 startActivity(new Intent(getApplicationContext(), AboutActivity.class));
                 return true;
             case R.id.long_click:
-                Toast.makeText(getApplicationContext(),"You Need To Long Click", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "You Need To Long Click", Toast.LENGTH_LONG).show();
 
         }
         return true;
     }
+
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         menu.setHeaderTitle("Long Click Options");
         menu.add(0, v.getId(), 0, "STRIKE");
@@ -198,26 +244,30 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        if(item.getTitle()=="STRIKE"){
+        CheckBox click = (CheckBox) findViewById(R.id.checkBox);
+        click.setOnClickListener(this);
+        if (item.getTitle() == "STRIKE") {
             numStrike++;
+            if (numStrike == 3 && click.isChecked()){
+                mTts.speak("out", TextToSpeech.QUEUE_FLUSH, null);
+            }
             validateCount();
             updateCount();
-        }
-
-        else if(item.getTitle()=="BALL"){
+        } else if (item.getTitle() == "BALL") {
             numBall++;
+            if (numBall == 4&& click.isChecked()){
+                mTts.speak("walk", TextToSpeech.QUEUE_FLUSH, null);
+            }
             validateCount();
             updateCount();
-        }
-        else {
+        } else {
             return false;
         }
         return true;
     }
 
-    boolean validateCount(){
+    boolean validateCount() {
         if (numStrike == 3) {
-
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("Out!")
                     .setCancelable(false)
@@ -254,13 +304,39 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
                     .create()
                     .show();
 
+
             return true;
         }
-        else
-            return false;
+        else {
 
+            return false;
+        }
     }
 
-//up
+    @Override
+    public void onInit(int i) {
+        if (i == TextToSpeech.SUCCESS) {
+            // Set preferred language to US english.
+            // Note that a language may not be available, and the result will indicate this.
+            int result = mTts.setLanguage(Locale.US);
+            // Try this someday for some interesting results.
+            // int result mTts.setLanguage(Locale.FRANCE);
+            if (result == TextToSpeech.LANG_MISSING_DATA ||
+                    result == TextToSpeech.LANG_NOT_SUPPORTED) {
+
+                // Language data is missing or the language is not supported.
+                Log.e(TAG, "Language is not available.");
+            }
+            else {
+                Toast.makeText(getApplicationContext(), "test", Toast.LENGTH_LONG).show();
+            }
+
+        }
+
+        else {
+            // Initialization failed.
+            Log.e(TAG, "Could not initialize TextToSpeech.");
+        }
+    }
 
 }

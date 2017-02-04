@@ -117,5 +117,19 @@
         android:layout_alignRight="@+id/out_value"
         android:layout_alignEnd="@+id/out_value" />
 
+    <CheckBox
+        android:text="Text to Speech"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/checkBox"
+        android:textColor="@color/colorAccent"
+        android:buttonTint="@color/colorPrimary"
+        android:layout_marginLeft="37dp"
+        android:layout_marginStart="37dp"
+        android:layout_above="@+id/strike_label"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+    </CheckBox>
+
 
 </RelativeLayout>

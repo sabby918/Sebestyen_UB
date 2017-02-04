@@ -116,4 +116,20 @@
         android:layout_toLeftOf="@+id/out_value"
         android:layout_toStartOf="@+id/out_value" />
 
+    <CheckBox
+        android:text="Text to Speech"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="14dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="16dp"
+        android:id="@+id/checkBox"
+        android:textColor="@color/colorAccent"
+        android:buttonTint="@color/colorPrimary">
+    </CheckBox>
+
+
 </RelativeLayout>
