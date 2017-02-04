@@ -1,21 +1,25 @@
 package com.example.sarah.sebestyen_ub;
 
-import android.content.ClipData;
+
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.view.menu.MenuView;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.TextView;
 import android.app.AlertDialog;
 import android.widget.Toast;
+import android.view.ContextMenu.*;
 
 
 public class MainActivity extends AppCompatActivity implements OnClickListener   {
@@ -44,7 +48,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
         //save
 
 
-
         if (savedInstanceState != null) {
             numBall = savedInstanceState.getInt("balls");
             numStrike = savedInstanceState.getInt("strikes");
@@ -52,6 +55,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
 
         }
 
+        Button LC = (Button) findViewById(R.id.long_click);
+        registerForContextMenu(LC);
 
 
         View strikeButton = findViewById(R.id.strike_button);
@@ -60,9 +65,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
         View ballButton = findViewById(R.id.ball_button);
         ballButton.setOnClickListener(this);
 
-        // Example of reading from persistent storage.
-        // Initialize the value of the 10X checkbox. Default value
-        //   is false.
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
 
         SharedPreferences.Editor editor = settings.edit();
@@ -106,12 +108,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
         Log.i(TAG, "onResume()");
     }
 
-    // Note that onDestroy() may not be called if
-    // the need for RAM is urgent (e.g., an incoming
-    // phone call), but the activity will still be
-    // shut down. Consequently, it's a good idea
-    // to save state that needs to persist between
-    // sessions in onPause().
     @Override
     protected void onPause() {
 
@@ -126,31 +122,12 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
 
     }
 
-    // Note that onDestroy() may not be called if
-    // the need for RAM is urgent (e.g., an incoming
-    // phone call), but the activity will still be
-    // shut down. Consequently, it's a good idea
-    // to save state that needs to persist between
-    // sessions in onPause().
     @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.i(TAG, "onDestroy()");
     }
 
-    // "icicle" is sometimes used as the name of the
-    // parameter because onSaveInstanceState() used to
-    // be called onFreeze().
-    // The Bundle updated here is the same one passed
-    //   to onCreate() above.
-    // This method isn't guaranteed to be called. If it
-    //   is critical that data be saved, save it in
-    //   persistent storage in onPause() rather than here
-    //   because this method will not be called in every
-    //   situation as described in its documentation.
-    // Summary: save data that should persist while the
-    //   application is running here. Save data that should
-    //   persist between application runs in persistent storage.
     @Override
     protected void onSaveInstanceState(Bundle icicle) {
         super.onSaveInstanceState(icicle);
@@ -162,8 +139,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
 
     }
 
-    // Note, by convention most apps restore state in onCreate()
-    // This method isn't used often.
     @Override
     protected void onRestoreInstanceState(Bundle icicle) {
         super.onRestoreInstanceState(icicle);
@@ -176,45 +151,11 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
         switch (view.getId()) {
             case R.id.strike_button:
                 numStrike++;
-                if (numStrike == 3) {
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setMessage("Out!")
-                            .setCancelable(false)
-                            .setPositiveButton("Okay", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    numStrike = 0;
-                                    numBall = 0;
-                                    numOut++;
-
-                                    dialog.dismiss();
-                                    updateCount();
-                                }
-                            })
-                            .create()
-                            .show();
-                }
+                validateCount();
                 break;
             case R.id.ball_button:
                 numBall++;
-                if (numBall == 4) {
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setMessage("Walk!")
-                            .setCancelable(false)
-                            .setPositiveButton("Okay", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    numStrike = 0;
-                                    numBall = 0;
-                                    dialog.dismiss();
-                                    updateCount();
-                                }
-                            })
-                            .create()
-                            .show();
-                }
+                validateCount();
                 break;
         }
         updateCount();
@@ -237,12 +178,89 @@ public class MainActivity extends AppCompatActivity implements OnClickListener  
                 numOut = 0;
                 updateCount();
                 return true;
-            case R.id.action_menu:
-                startActivity(new Intent(getApplicationContext(), AboutActivity.class));
+            case R.id.action_about:
 
+                startActivity(new Intent(getApplicationContext(), AboutActivity.class));
                 return true;
+            case R.id.long_click:
+                Toast.makeText(getApplicationContext(),"You Need To Long Click", Toast.LENGTH_LONG).show();
+
         }
         return true;
     }
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        menu.setHeaderTitle("Long Click Options");
+        menu.add(0, v.getId(), 0, "STRIKE");
+        menu.add(0, v.getId(), 0, "BALL");
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        if(item.getTitle()=="STRIKE"){
+            numStrike++;
+            validateCount();
+            updateCount();
+        }
+
+        else if(item.getTitle()=="BALL"){
+            numBall++;
+            validateCount();
+            updateCount();
+        }
+        else {
+            return false;
+        }
+        return true;
+    }
+
+    boolean validateCount(){
+        if (numStrike == 3) {
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Out!")
+                    .setCancelable(false)
+                    .setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            numStrike = 0;
+                            numBall = 0;
+                            numOut++;
+
+                            dialog.dismiss();
+                            updateCount();
+                        }
+                    })
+                    .create()
+                    .show();
+
+            return true;
+        }
+        if (numBall == 4) {
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Walk!")
+                    .setCancelable(false)
+                    .setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            numStrike = 0;
+                            numBall = 0;
+                            dialog.dismiss();
+                            updateCount();
+                        }
+                    })
+                    .create()
+                    .show();
+
+            return true;
+        }
+        else
+            return false;
+
+    }
+
+
 
 }

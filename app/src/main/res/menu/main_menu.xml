@@ -5,6 +5,7 @@
         android:title="Refresh"
         app:showAsAction="always" />
     <item
-        android:id="@+id/action_menu"
+        android:id="@+id/action_about"
         android:title="About" />
+
 </menu>
